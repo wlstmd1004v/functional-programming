@@ -151,48 +151,48 @@ console.log("업데이트 데이터\n", updateSubjects1);
 //^ }
 //^ createCountUpButton();
 
-function createCountUpButton(
-  container,
-  { count: initialCount = 0, step = 1, max = 10 } = {}
-) {
-  if (!container || container.nodeType !== document.ELEMENT_NODE) {
-    throw new Error("container는 문서의 요소가 아닙니다.");
-  }
+//^function createCountUpButton(
+//^  container,
+//^  { count: initialCount = 0, step = 1, max = 10 } = {}
+//^) {
+//^  if (!container || container.nodeType !== document.ELEMENT_NODE) {
+//^    throw new Error("container는 문서의 요소가 아닙니다.");
+//^  }
 
   //console.log({ initialCount, step });
-  let count = initialCount;
-  const countUpButton = document.createElement("button");
+//^  let count = initialCount;
+//^  const countUpButton = document.createElement("button");
 
-  const render = (newCount) => {
-    countUpButton.textContent = String(newCount);
-  };
+//^  const render = (newCount) => {
+//^    countUpButton.textContent = String(newCount);
+//^  };
 
   //& 과제
   //& 'max' prop을 추가하고, count 값이 max보다 커지면 사용자가 더 이상 버튼을 누를 수 없도록 막는다
   //& 'max' prop을 추가하고, count 값이 max보다 커지면 화면의 카운트는 버튼을 눌러도 max 값에 머무른다.
 
-  const handleCountUp = (e) => {
-    if (count + step > max || count >= max) {
-      count = max;
-      render(count);
-      return;
-    }
-    count += step;
+//^  const handleCountUp = (e) => {
+//^    if (count + step > max || count >= max) {
+//^      count = max;
+//^      render(count);
+//^      return;
+//^    }
+//^    count += step;
     //^ Update한 count를 render
-    render(count);
-  };
+//^    render(count);
+//^  };
 
-  countUpButton.setAttribute("type", "button");
-  countUpButton.classList.add("countUpButton");
+//^  countUpButton.setAttribute("type", "button");
+//^  countUpButton.classList.add("countUpButton");
 
-  countUpButton.addEventListener("click", handleCountUp);
+//^  countUpButton.addEventListener("click", handleCountUp);
 
   //^ 초기값인 count를 render
-  render(count);
+//^  render(count);
 
-  container.append(countUpButton);
-}
-const demoContainer = document.getElementById("demo");
+//^  container.append(countUpButton);
+//^}
+//^ const demoContainer = document.getElementById("demo");
 
 //^ default: {count:0, step: 1}
 //^ createCountUpButton(demoContainer);
@@ -200,13 +200,9 @@ const demoContainer = document.getElementById("demo");
 //^ createCountUpButton(demoContainer, { count: 2 });
 //^ createCountUpButton(demoContainer, { count: 3, step: 2 });
 
-createCountUpButton(demoContainer, { count: 3, step: 2 });
-//# --------------------------------------------------------------------------
-//# JavaScript 프로그래밍 패러다임
-//# → 클래스(class)를 사용해 구현합니다. (참고: https://mzl.la/3QrTKlF)
+//^ createCountUpButton(demoContainer, { count: 3, step: 2 });
 
-//# 붕어빵 틀(생성자함수: 클래스)
-class CountUpButton {
+/* class CountUpButton {
   constructor(userOptions) {
     this.config = { ...CountUpButton.defaultProps, ...userOptions };
     this.init();
@@ -225,10 +221,164 @@ globalThis.CountUpButton = CountUpButton;
 
 const firstCountUp = new CountUpButton({
   count: 3,
-});
+}); */
 
-//demoContainer.append(firstCountUp.render());
+//# --------------------------------------------------------------------------
+//# JavaScript 프로그래밍 패러다임
+//# → 클래스(class)를 사용해 구현합니다. (참고: https://mzl.la/3QrTKlF)
+
+//# 붕어빵 틀(생성자함수: 클래스)
+
+class CounterButton {
+  #element = null;
+  #config = {};
+  #updateCallback = null;
+  #clearIntervalId = 0;
+
+  static defaultOptions = {
+    count: 0,
+    step: 1,
+  }
+
+  constructor(element, props = {}) {
+    if (!element) {
+      throw new Error('element가 문서에 존재하지 않습니다.');
+    }
+
+    this.#element = element;
+    this.#init(props);
+  }
+
+  #init(props) {
+    this.setConfig(props);
+    this.#updateDOM();
+    this.#bindEvent();
+  }
+
+  #bindEvent() {
+    this.#element.addEventListener('click', () => {
+      this.setCount();
+      this.#updateCallback?.(this.#config.count);
+    });
+  }
+
+  #updateDOM() {
+    const { count } = this.#config;
+    this.#element.textContent = count;
+  }
+
+  setConfig(userConfig = {}) {
+    this.#config = { ...CounterButton.defaultOptions, ...userConfig };
+  }
+
+  setCount(newCount) {
+    const { count, step } = this.#config;
+
+    this.setConfig({
+      ...this.#config,
+      count: newCount ?? count + step,
+    });
+
+    this.#updateDOM();
+  }
+
+  update(callback) {
+    this.#updateCallback = callback;
+  }
+
+  play(fps = 1000 / 1) {
+    this.#clearIntervalId = setInterval(() => {
+      const { count, step } = this.#config;
+      this.setCount(count + step);
+      this.#updateDOM();
+    }, fps);
+  }
+
+  stop() {
+    clearInterval(this.#clearIntervalId);
+  }
+
+  mount(container) {
+    container.append(this.#element);
+  }
+}
+
+const counterButton = new CounterButton(
+  document.createElement('button'),
+  {
+    count: 2,
+    step: 2
+  }
+);
+
+counterButton.update((count) => {
+  document.querySelector('.object-oriented').textContent = String(count);
+})
+
+counterButton.mount(document.getElementById('demo'));
+
 
 //# --------------------------------------------------------------------------
 //# 웹 컴포넌트(Web Components) API
 //# → 웹 컴포넌트를 사용해 구현합니다. (참고: https://mzl.la/3YjFdu9)
+
+class CounterButtonComponent extends HTMLElement {
+  #config = {
+    count: 0,
+    step: 1,
+  }
+
+  constructor() {
+    super();
+    this.#init();
+  }
+
+  #init() {
+    const userConfig = {
+      count: Number(this.getAttribute('count')),
+      step: Number(this.getAttribute('step')) || 1,
+    };
+
+    this.#config = { ...this.#config, ...userConfig };
+  }
+
+  #bindEvent(e) {
+    if (e.target.matches('button')) {
+      this.#setCount();
+      this.render();
+      // 참고: https://developer.mozilla.org/ko/docs/Web/Events/Creating_and_triggering_events
+      this.dispatchEvent(new CustomEvent('update', { detail: {
+        count: this.#config.count
+      } }));
+    }
+  }
+
+  #setCount() {
+    const { count, step } = this.#config;
+    this.#config.count = count + step;
+  }
+
+  connectedCallback() {
+    // console.log('connected');
+    this.render();
+    this.addEventListener('click', (e) => this.#bindEvent(e));
+  }
+
+  disconnectedCallback() {
+    // console.log('disconnected');
+    this.removeEventListener('click', (e) => this.#bindEvent(e));
+  }
+
+  render() {
+    const { count } = this.#config;
+    this.innerHTML = `<button type="button">${count}</button>`;
+  }
+}
+
+customElements.define('counter-button', CounterButtonComponent);
+
+const counterButtonEl = document.querySelector('counter-button');
+
+counterButtonEl.addEventListener('update', ({ detail: { count } }) => {
+  document.querySelector('.web-component').textContent = String(count);
+});
